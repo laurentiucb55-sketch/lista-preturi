@@ -1,0 +1,1016 @@
+<style>
+ 
+  .dcpl-wrap{
+    --dcpl-accent:#c84a4a;
+    --dcpl-line: rgba(0,0,0,.18);
+    max-width: 980px;
+    margin: 0 auto;
+
+    /* FIX diacritice (ș/ț): font cu suport complet + fără bold sintetizat */
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+    font-synthesis: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+
+    color: inherit;
+  }
+  .dcpl-title{
+    text-align:center;
+    font-weight: 700;
+    font-size: clamp(22px, 3vw, 34px);
+    margin: 6px 0 4px;
+  }
+  .dcpl-subtitle{
+    text-align:center;
+    color: var(--dcpl-accent);
+    font-weight: 700;
+    margin: 0 0 14px;
+  }
+
+  .dcpl-section{
+    text-align:center;
+    color: var(--dcpl-accent);
+    font-weight: 700;
+    margin: 18px 0 10px;
+  }
+
+  .dcpl-bottomline{
+    border-bottom: 1px solid var(--dcpl-line);
+  }
+
+  /* Accordion (radio) */
+  .dcpl-toggle{
+    position:absolute;
+    opacity:0;
+    pointer-events:none;
+  }
+
+  /* rândul principal – titlu + “detalii” dedesubt */
+  .dcpl-row{
+    display:flex;
+    flex-direction: column;
+    align-items:stretch;
+    gap: 4px;
+    padding: 12px 6px;
+    border-top: 1px solid var(--dcpl-line);
+    cursor:pointer;
+    user-select:none;
+  }
+
+  /* prima linie din rând: titlu stânga, preț dreapta */
+  .dcpl-row-main{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap: 14px;
+  }
+
+  .dcpl-left{
+    display:flex;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .dcpl-arrow{
+    width: 18px;
+    flex: 0 0 18px;
+    font-weight: 900;
+    color: var(--dcpl-accent);
+    opacity: .95;
+    transform: translateY(1px);
+    transition: transform .18s ease;
+  }
+
+  .dcpl-name{
+    font-weight: 600;
+    line-height: 1.25;
+    word-break: break-word;
+  }
+
+  .dcpl-price{
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  /* Linie cu ▾ detalii ▾, centrată sub titlul tratamentului */
+  .dcpl-more{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:4px;
+    font-size: 11px;
+    color: var(--dcpl-accent);
+    opacity:.85;
+    line-height: 1;
+  }
+
+  .dcpl-more-arrow{
+    font-size: 10px;
+    transform: translateY(1px);
+  }
+
+  .dcpl-row:hover .dcpl-more{
+    opacity:1;
+  }
+
+  .dcpl-panel{
+    max-height: 0;
+    overflow: hidden;
+    padding: 0 6px 0 34px; /* aliniază descrierea sub text, după săgeată */
+    opacity: 0;
+    transition: max-height .25s ease, opacity .2s ease;
+  }
+
+  .dcpl-panel p{
+    margin: 0;
+    line-height: 1.45;
+    opacity: .92;
+  }
+
+  .dcpl-close{
+    display:inline-block;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--dcpl-accent);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  /* OPEN state (când radio e bifat) */
+  .dcpl-toggle:checked + label .dcpl-arrow{
+    transform: rotate(90deg) translateY(-1px);
+  }
+
+ .dcpl-toggle:checked + label + .dcpl-panel{
+  max-height: 2400px;
+  opacity: 1;
+  padding-bottom: 12px;
+}
+
+  /* Hover subtil */
+  .dcpl-row:hover .dcpl-name{ opacity: .92; }
+
+  /* Mică optimizare pe mobil */
+  @media (max-width: 520px){
+    .dcpl-row{ padding: 12px 2px; }
+    .dcpl-panel{ padding-left: 30px; }
+  }
+
+
+/* Banner "Important de citit" */
+.dcpl-info-banner{
+  background: rgba(200,74,74,.10);
+  border: 1px solid rgba(200,74,74,.25);
+  border-radius: 12px;
+  margin: 10px 0 14px;
+  padding: 12px 10px;
+}
+
+.dcpl-info-banner{ border-top: 0; } /* anulează linia de listă */
+.dcpl-info-banner .dcpl-price.dcpl-info-cta{ font-weight: 800; }
+.dcpl-info-banner .dcpl-name{ font-weight: 800; }
+.dcpl-info-banner .dcpl-info-more{ font-size: 12px; opacity: .95; }
+
+/* Link care deschide si face scroll la Important */
+.dcpl-jump{
+  color: var(--dcpl-accent);
+  text-decoration: underline;
+  font-weight: 600;
+  cursor: pointer;
+}
+.dcpl-row{ scroll-margin-top: 90px; } /* ajustează dacă ai header sticky */
+
+</style>
+
+<div class="dcpl-wrap" id="dcpl">
+  <div class="dcpl-title">Lista de prețuri</div>
+  <div class="dcpl-subtitle">Facials by DC:</div>
+
+  <!-- Radio "none" (închide tot) -->
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-none" checked="">
+
+  <!-- FACIALS -->
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-01">
+  <label class="dcpl-row" for="dcpl-01">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Tratament PREMIUM OBAGI</span></span>
+      <span class="dcpl-price">600 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>Tratament premium de curățare și revitalizare: demachiere, hydradermabraziune, spatulă cu ultrasunete și extracții controlate, urmate de protocol complet OBAGI (Professional-C Serum, Daily Hydro-Drops, Hydrate/Hydrate Luxe și SPF). Ideal pentru hidratare profundă, protecție antioxidantă și un glow vizibil. Durata din programator este orientativă; prețul rămâne fix, indiferent de durata efectivă.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-02">
+  <label class="dcpl-row" for="dcpl-02">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name"> Curățare Faciala + Hydrafacial</span></span>
+      <span class="dcpl-price">450 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>Curățare profundă a tenului cu demachiere, exfoliere, extracții și hidrodermabraziune cu aparat Hydrablast, pentru eliminarea impurităților, sebumului și celulelor moarte. Lasă pielea curată, netedă și revigorată, pregătită pentru tratamentele următoare. Durata din programator este orientativă; prețul rămâne fix, indiferent de durata efectivă.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-03">
+  <label class="dcpl-row" for="dcpl-03">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Tratament de hidratare</span></span>
+      <span class="dcpl-price">450 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>Ideal pentru pielea deshidratată, sensibilă sau ternă. Serurile concentrate și măștile intens hidratante refac echilibrul hidric, calmează și redau luminozitatea tenului. Durata din programator este orientativă; prețul rămâne fix, indiferent de durata efectivă.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-04">
+  <label class="dcpl-row" for="dcpl-04">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Tratament anti-îmbătrânire</span></span>
+      <span class="dcpl-price">450 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>Tratament facial pentru fermitate și linii fine, cu masaj intens și produse bogate în peptide, acid hialuronic și vitamine. Poate fi completat cu aparatură de stimulare a colagenului pentru un efect de lifting progresiv. Durata din programator este orientativă; prețul rămâne fix, indiferent de durata efectivă.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-05">
+  <label class="dcpl-row" for="dcpl-05">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Tratament anti acneic</span></span>
+      <span class="dcpl-price">450 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>Tratament purifiant și calmant pentru ten gras/acneic, cu acizi (ex. acid salicilic), niacinamidă, zinc și produse dedicate reducerii inflamației. Curăță porii, reglează sebumul și protejează bariera pielii de iritații. Durata din programator este orientativă; prețul rămâne fix, indiferent de durata efectivă.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-06">
+  <label class="dcpl-row" for="dcpl-06">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Mezoterapie virtuală</span></span>
+      <span class="dcpl-price">450 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>Infuzie de active (hidratare, glow, revitalizare) cu mezoterapie virtuală, fără ace. Tehnologia ajută serurile să pătrundă mai profund pentru o piele mai plină, netedă și luminoasă. Durata din programator este orientativă; prețul rămâne fix, indiferent de durata efectivă.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-07">
+  <label class="dcpl-row" for="dcpl-07">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Pregătire ten pentru machiaj</span></span>
+      <span class="dcpl-price">499 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>Demachiere, tonifiere și curățare profundă cu Hydrablast, urmate de exfoliere enzimatică, extracții, seruri personalizate, masaj și mască calmantă. Opțional, se adaugă ultrasunete, oxigen hiperbaric, radiofrecvență sau electroporație pentru un ten uniform, hidratat și neted, ideal pentru un machiaj rezistent și impecabil. Durata din programator este orientativă; prețul rămâne fix, indiferent de durata efectivă.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <!-- PĂR / SCALP -->
+  <div class="dcpl-section">Păr / Scalp:</div>
+
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-08">
+  <label class="dcpl-row" for="dcpl-08">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Microneedling Scalp</span></span>
+      <span class="dcpl-price">400 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>Microneedling pentru scalp cu ser profesional Dermedics Meso Hair (Biotinyl-GHK, Apigenină, acid oleanolic). Stimulează microcirculația, fortifică rădăcina, susține reglarea DHT și ajută la reducerea căderii părului, cu îmbunătățirea densității vizuale și vitalității firelor.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-09">
+  <label class="dcpl-row" for="dcpl-09">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Microneedling Scalp cu Exozomi</span></span>
+      <span class="dcpl-price">630 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>Microneedling minim invaziv cu exozomi aplicați topic pentru absorbție superioară. Susține regenerarea foliculară, reduce căderea (adjuvant), îmbunătățește retenția firelor și echilibrează scalpul, pentru păr cu aspect mai dens, mai gros și mai sănătos. După procedură se evită spălarea agresivă, sauna și vopsitul 24–72 h, în funcție de recomandare.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <!-- HIFU FACIAL -->
+  <div class="dcpl-section">HIFU facial:</div>
+
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-10">
+  <label class="dcpl-row" for="dcpl-10">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">HIFU Full Face</span></span>
+      <span class="dcpl-price">690 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>Tratament HIFU pentru fața completă, cu ultrasunete focalizate care acționează în straturile profunde ale pielii și stimulează producția de colagen și elastină. Ajută la redefinirea conturului facial, reducerea gușei/bărbiei duble și netezirea ridurilor fine, cu efect de lifting progresiv și fără timp de recuperare. Nu este indicat în sarcină/alăptare, la pacemaker, implanturi metalice în zonă, probleme tiroidiene sau tratamente recente cu laser, peeling profund ori izotretinoin.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-11">
+  <label class="dcpl-row" for="dcpl-11">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">HIFU Facial – 1 zonă mică</span></span>
+      <span class="dcpl-price">360 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>HIFU facial pentru o zonă mică (gât, obraji, riduri ochi, gușă, frunte etc.), cu ultrasunete focalizate care stimulează colagenul exact acolo unde este nevoie. Ideal pentru fermitate locală, tonus îmbunătățit și netezirea ridurilor, cu rezultate progresive și fără perioadă de recuperare. Se aplică aceleași contraindicații ca la HIFU Full Face (pacemaker, sarcină, probleme tiroidiene, implanturi sau proceduri estetice recente în zonă).</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <!-- MICRONEEDLING -->
+  <div class="dcpl-section">Microneedling:</div>
+
+  <!-- PREMIUM Microneedling RF + Exozomi + Oxigen Hiperbaric -->
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-30">
+  <label class="dcpl-row" for="dcpl-30">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">PREMIUM Microneedling RF + Exozomi + Oxigen Hiperbaric</span></span>
+      <span class="dcpl-price">1490 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>Radiofrecvența fracționată creează microcanale, exozomii activează regenerarea, iar oxigenul hiperbaric re-infuzează profund complexul regenerant, cu efect mult peste microneedlingul clasic. Vizează pori dilatați, semne post-acneice, piele ternă sau cu fermitate scăzută și oferă textură mai fină, ton uniform, luminozitate și fermitate crescute, cu recuperare rapidă. De regulă se recomandă 3–4 ședințe la 4 săptămâni, apoi întreținere trimestrială.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-12">
+  <label class="dcpl-row" for="dcpl-12">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Microneedling cu Exozomi</span></span>
+      <span class="dcpl-price">745 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>Microneedling avansat cu ser V-TECH bogat în PDRN, exozomi sintetici, celule stem vegetale, peptide și acid hialuronic. Micro-canalele create accelerează regenerarea, cresc fermitatea, uniformizează textura și estompează liniile fine, oferind un efect vizibil de rejuvenare și “glow” încă de la primele ședințe. Numărul de tratamente se stabilește în cadrul consultației, în funcție de nevoile tenului.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-13">
+  <label class="dcpl-row" for="dcpl-13">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Microneedling personalizat</span></span>
+      <span class="dcpl-price">500 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>Procedură cu microace care stimulează regenerarea pielii, combinată cu seruri adaptate obiectivului: hidratare, anti-aging, luminozitate sau corectarea texturii. Poate fi completată cu electroporație, radiofrecvență sau terapie LED pentru rezultate intensificate și recuperare rapidă.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-14">
+  <label class="dcpl-row" for="dcpl-14">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Nanofusion Full Face</span></span>
+      <span class="dcpl-price">930 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>NanoFusion cu Fillmed NCTF 135 HA (59 de ingrediente active: acid hialuronic, vitamine, minerale, aminoacizi) livrate controlat în piele cu dispozitiv minim invaziv. Hidratează intens, revitalizează, atenuează liniile fine și îmbunătățește densitatea, tonusul și luminozitatea tenului obosit sau matur.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-15">
+  <label class="dcpl-row" for="dcpl-15">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Nanofusion – Zonă mică</span></span>
+      <span class="dcpl-price">480 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>Tratament NanoFusion țintit pentru zone delicate precum conturul ochilor, buze, bărbie sau frunte. NCTF 135 HA este livrat local pentru hidratare intensă, revitalizare și reparare, cu reducerea liniilor fine și textură mai netedă și luminoasă exact în zonele care au cea mai mare nevoie.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-16">
+  <label class="dcpl-row" for="dcpl-16">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Nanofusion – Gât/Decolteu</span></span>
+      <span class="dcpl-price">650 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>NanoFusion cu NCTF 135 HA dedicat gâtului și decolteului, ideal pentru pielea deshidratată sau cu laxitate. Hidratează profund, crește densitatea și tonusul pielii, estompează liniile fine și uniformizează textura, oferind un aspect mai neted, ferm și luminos al acestor zone fragile.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-17">
+  <label class="dcpl-row" for="dcpl-17">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Radio-F. Fractionată Full Face</span></span>
+      <span class="dcpl-price">920 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>Radiofrecvența fracționată combină microacele cu energia RF pentru a trata întreaga față în profunzime. Stimulează intens colagenul și elastina, îmbunătățește fermitatea, reduce ridurile și porii dilatați și estompează cicatricile și semnele post-acneice, pentru o piele mai netedă, uniformă și întinerită, cu recuperare scurtă.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-18">
+  <label class="dcpl-row" for="dcpl-18">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Radio-F. Fractionată – 1 zonă mică</span></span>
+      <span class="dcpl-price">450 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>Radiofrecvență fracționată aplicată pe o zonă mică (obraji, contur ochi/gură, bărbie, gât parțial, frunte). Acționează în profunzime pentru a îmbunătăți fermitatea, a netezi ridurile fine și a estompa cicatricile, petele și semnele post-acneice, cu recuperare minimă și rezultate progresive.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <!-- PEELING -->
+  <div class="dcpl-section">Peeling:</div>
+
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-19">
+  <label class="dcpl-row" for="dcpl-19">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Peeling Cearcăne</span></span>
+      <span class="dcpl-price">470 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>Protocol profesional periocular ME LINE Dark Circles pentru cearcăne pigmentare maronii. Combinația de acizi exfolianți și ingrediente depigmentante estompează treptat zona întunecată, uniformizează nuanța și oferă un aspect mai luminos și odihnit privirii. Numărul de ședințe se stabilește la consultație.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-20">
+  <label class="dcpl-row" for="dcpl-20">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Peeling chimic personalizat</span></span>
+      <span class="dcpl-price">495 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>Peeling chimic adaptat tipului de piele, cu acizi AHA/BHA/PHA în concentrații controlate, pentru acnee, pete și textură neuniformă. Exfoliază blând, revigorează tenul și oferă rezultate vizibile în câteva zile, cu timp scurt de recuperare.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-21">
+  <label class="dcpl-row" for="dcpl-21">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Peeling Trifazic – PREMIUM</span></span>
+      <span class="dcpl-price">695 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>ZK Peel – peeling trifazic premium cu acid hialuronic în greutăți moleculare diferite, acizi, vitamine, aminoacizi, probiotice și celule stem vegetale. Reduce agresiunea acidă față de peelingurile clasice, în timp ce uniformizează nuanța, îmbunătățește textura și luminozitatea, ameliorează acneea și semnele de fotoîmbătrânire. Numărul de ședințe se stabilește în cadrul consultației.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-22">
+  <label class="dcpl-row" for="dcpl-22">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Peeling Carbon Activ</span></span>
+      <span class="dcpl-price">595 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>V Carbon Peel – peeling cu carbon activ în două etape (film + spray neutralizant), cu acizi ferulic, mandelic și lactic și extracte vegetale. Curăță intens porii, reduce sebumul și impuritățile, strânge porii și oferă efect imediat de lifting și luminozitate, cu mai puțină agresiune decât peelingurile clasice. Ajută la reducerea acneei, a urmelor post-acneice și a liniilor fine.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-23">
+  <label class="dcpl-row" for="dcpl-23">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Peeling pete pigmentare/melasmă</span></span>
+      <span class="dcpl-price">540 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>INNO-EXFO Lightening – peeling cu vitamina A și acizi depigmentanți pentru pete maronii, melasmă, urme post-acneice și ten fotoîmbătrânit. Uniformizează treptat nuanța, reduce hiperpigmentările și îmbunătățește textura și luminozitatea pielii. Protocolul de ședințe se stabilește la consultație.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-24">
+  <label class="dcpl-row" for="dcpl-24">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Peeling pt. piele sensibilă</span></span>
+      <span class="dcpl-price">540 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>INNO-EXFO Sensitive Peel – peeling blând pentru piele sensibilă, reactivă și cu roșeață. Combină acizi cu efect antioxidant pentru a întări bariera cutanată, a reduce treptat roșeața și senzația de piele care „ține” și a lăsa tenul mai neted, hidratat și luminos. Protocolul este personalizat după consultație.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <!-- CORP -->
+  <div class="dcpl-section">Tratamente Corporale:</div>
+
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-25">
+  <label class="dcpl-row" for="dcpl-25">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Liposonix – 1 zonă mare</span></span>
+      <span class="dcpl-price">690 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>Liposonix este un tratament non-invaziv de conturare care folosește ultrasunete focalizate (HIFU) pentru a distruge selectiv celulele adipoase dintr-o zonă delimitată (ex. abdomen, flancuri, coapse, brațe, linia sutienului). O ședință poate reduce cu aproximativ 2–4 cm circumferința zonei, iar rezultatele continuă să se îmbunătățească în săptămânile următoare, pe măsură ce organismul elimină natural țesutul gras.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-26">
+  <label class="dcpl-row" for="dcpl-26">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">HIFU Corporal – 1 zonă mare</span></span>
+      <span class="dcpl-price">690 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>Tratament HIFU corporal pentru fermitate, tonifiere și conturare vizibilă într-o zonă precum abdomenul, flancurile, coapsele, brațele sau linia sutienului. Ultrasunetele focalizate acționează în profunzimea țesutului, stimulează colagenul și elastina și ajută la strângerea pielii și redefinirea conturului, fără incizii și fără timp de recuperare.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-27">
+  <label class="dcpl-row" for="dcpl-27">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Radio-F Fractionată (corp.) – 1 zonă</span></span>
+      <span class="dcpl-price">920 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>Microneedling RF corporal pentru vergeturi, cicatrici și piele laxă într-o zonă aleasă (abdomen, coapse, brațe etc.). Microacele și energia de radiofrecvență stimulează intens colagenul și elastina, netezesc textura, cresc fermitatea și îmbunătățesc vizibil aspectul general al pielii în timp.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-28">
+  <label class="dcpl-row" for="dcpl-28">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Radiofrecvență Corporală – o zonă</span></span>
+      <span class="dcpl-price">500 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>Radiofrecvență corporală non-invazivă care încălzește controlat straturile profunde ale pielii pentru a stimula colagenul și elastina și a îmbunătăți microcirculația. Ajută la creșterea fermității, redefinirea conturului, reducerea aspectului de celulită și netezirea texturii, cu o senzație plăcută de căldură și fără downtime. Protocolul și contraindicațiile (pacemaker, sarcină, implanturi metalice, afecțiuni cutanate active etc.) se stabilesc în cadrul consultației.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+
+  <input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-29">
+  <label class="dcpl-row" for="dcpl-29">
+    <span class="dcpl-row-main">
+      <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Curățare SPATE cu HydraDermabraziune</span></span>
+      <span class="dcpl-price">700 lei</span>
+    </span>
+    <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+  </label>
+  <div class="dcpl-panel">
+    <p>Tratament delicat pentru pielea spatelui cu acnee, puncte negre sau sebum în exces. Curăță și exfoliază profund cu Hydrablast/hidradermabraziune, reducând impuritățile și uniformizând textura, pentru un spate mai curat, neted și luminos, fără disconfort semnificativ sau timp de recuperare.</p>
+    <label class="dcpl-close" for="dcpl-none">Închide</label>
+  </div>
+<!-- EPILARE DEFINITIVĂ -->
+
+<style>
+  /* Banner Important: mai vizibil, centrat, fara "Info" in dreapta */
+  #dcpl .dcpl-info-banner{
+    background: rgba(200,74,74,.16);
+    border: 1px solid rgba(200,74,74,.45);
+    border-left: 6px solid var(--dcpl-accent);
+    border-radius: 14px;
+    margin: 12px 6px 14px;
+    padding: 14px 12px;
+    box-shadow: 0 6px 16px rgba(0,0,0,.06);
+  }
+  #dcpl .dcpl-info-banner .dcpl-row-main{ justify-content:center; }
+  #dcpl .dcpl-info-banner .dcpl-left{ justify-content:center; }
+  #dcpl .dcpl-info-banner .dcpl-name{ font-weight: 800; text-align:center; }
+  #dcpl .dcpl-info-banner .dcpl-more{ font-size: 12px; opacity: .95; }
+
+  /* Linia cu trimitere catre "Important": pe 2 randuri, aranjat frumos */
+  #dcpl .dcpl-ep-ref{ display:block; margin-top: 10px; }
+  #dcpl a.dcpl-jump.dcpl-ep-jump{ display:block; margin-top: 3px; }
+
+  /* Ca sa nu se taie textul la panourile lungi */
+  #dcpl .dcpl-toggle:checked + label + .dcpl-panel.dcpl-long{ max-height: 20000px; }
+</style>
+
+<div class="dcpl-section">Epilare definitivă:</div>
+
+<!-- IMPORTANT (BANNER) -->
+<input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-ep-info">
+<label id="dcpl-ep-info-row" class="dcpl-row dcpl-info-banner" for="dcpl-ep-info">
+  <span class="dcpl-row-main">
+    <span class="dcpl-left">
+      <span class="dcpl-arrow">▸</span>
+      <span class="dcpl-name">Important de citit înainte de programare</span>
+    </span>
+  </span>
+  <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>apasă pentru detalii<span class="dcpl-more-arrow">▾</span></span>
+</label>
+
+<div class="dcpl-panel dcpl-long">
+  <p>
+    <strong>Detalii despre aparatul folosit</strong><br>
+    Lucrăm cu platforma Formatk Alpha System, care combină laser diodă 808 nm și 3D IPL (spectru 430-1200 nm).
+    Tehnologia PowerMotion (generația 3) este gândită să livreze energia eficient, cu confort mai bun, iar parametrii se personalizează în funcție de fototip și firul de păr, inclusiv cu ajutorul măsurării melaninei (Milo).<br><br>
+
+    <strong>Pregătire obligatorie înainte de ședință</strong><br>
+    • Nu folosi ceară, epilator sau pensetă pe zona tratată în ultimele 3-4 săptămâni.<br>
+    • Rade zona cu lamă, ideal cu o seară înainte sau cu 24 de ore înainte.<br>
+    • În ziua procedurii, nu aplica cremă sau ulei pe zona tratată.<br><br>
+
+    <strong>Recomandare pentru rezultate</strong><br>
+    Pentru rezultate optime pe o zonă, de regulă sunt necesare 4-6 ședințe (uneori până la 8), la intervale regulate, conform indicatiilor specialistului.<br><br>
+
+    <strong>Notă pentru persoanele care au făcut epilare în altă parte</strong><br>
+    Dacă ai făcut ședințe în alt salon și nu ai avut rezultate, este posibil să fie nevoie să începem la noi cu un protocol complet (4-8 ședințe),
+    în funcție de istoricul tău, tipul de aparat folosit și parametrii aplicați anterior.
+    În unele situații, setările nepotrivite pot duce la rezultate slabe sau la stimularea firelor fine, mai ales în zone influențate hormonal.
+    Evaluăm situația de la început pentru a alege un protocol sigur și eficient.<br><br>
+
+    
+<strong>De ce nu oferim epilare full body într-o singură ședință</strong><br><br>
+
+Nu oferim pachet „full body” într-o singură ședință, deoarece fiecare zonă necesită parametri diferiți de lucru (energie, tehnică, durată) și intervale specifice între ședințe, în funcție de sensibilitatea pielii și tipul firului de păr. Un „full body” făcut în grabă ar compromite fie eficiența, fie siguranța. De aceea lucrăm pe zone, în condiții controlate, pentru rezultate cât mai bune și confort maxim.<br><br>
+
+<strong>Intervale orientative între ședințe, în funcție de zonă:</strong>
+</p><ul style="margin: 8px 0 12px 18px; padding: 0;">
+  <li><strong>La 3 săptămâni:</strong> față</li>
+  <li><strong>La 4 săptămâni:</strong> axilă, spate, umeri, lombar, abdomen, inghinal, interfesier</li>
+  <li><strong>La 6 săptămâni:</strong> gât, brațe, piept, fese, picioare</li>
+</ul>
+
+Intervalele pot fi ajustate ușor în funcție de răspunsul pielii și ritmul de creștere al firelor.<br><br>
+  <p></p>
+  <label class="dcpl-close" for="dcpl-none">Închide</label>
+</div>
+
+<!-- ZONE MICI -->
+<input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-ep-01">
+<label class="dcpl-row" for="dcpl-ep-01">
+  <span class="dcpl-row-main">
+    <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Zone mici (2 zone la alegere)</span></span>
+    <span class="dcpl-price">360 lei</span>
+  </span>
+  <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+</label>
+<div class="dcpl-panel">
+  <p>
+    Tratament de epilare definitivă pentru 2 zone mici, în aceeași ședință, cu obiectiv principal reducerea firelor de păr.
+    Ideal pentru început și pentru zone punctuale.<br>
+    Alegi 2 zone dintre: axile, ceafă/gât, față parțială (mustață, bărbie, perciuni), inghinal parțial (linia bikini), interfesier, degete, areole, linia albă, linia ombilicului etc.<br>
+    Preț fix pentru 2 zone mici, timp total maxim 30 min.<br><br>
+
+    <span class="dcpl-ep-ref">Pentru mai multe detalii despre aparat și pregătire:</span>
+    <a href="#dcpl-ep-info-row" class="dcpl-jump dcpl-ep-jump" data-dcpl-open="dcpl-ep-info">Important de citit înainte de programare</a>.
+  </p>
+  <label class="dcpl-close" for="dcpl-none">Închide</label>
+</div>
+
+<!-- FULL FACE -->
+<input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-ep-02">
+<label class="dcpl-row" for="dcpl-ep-02">
+  <span class="dcpl-row-main">
+    <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Full Face</span></span>
+    <span class="dcpl-price">240 lei</span>
+  </span>
+  <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+</label>
+<div class="dcpl-panel">
+  <p>
+    Tratament de epilare definitivă pentru fața completă, cu obiectiv principal reducerea firelor de păr (inclusiv fire fine tip puf, în funcție de evaluare).
+    Parametrii se stabilesc personalizat, în funcție de fototip și tipul de fir.<br><br>
+
+    <span class="dcpl-ep-ref">Pentru mai multe detalii despre aparat și pregătire:</span>
+    <a href="#dcpl-ep-info-row" class="dcpl-jump dcpl-ep-jump" data-dcpl-open="dcpl-ep-info">Important de citit înainte de programare</a>.
+  </p>
+  <label class="dcpl-close" for="dcpl-none">Închide</label>
+</div>
+
+<!-- INGHINAL TOTAL -->
+<input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-ep-03">
+<label class="dcpl-row" for="dcpl-ep-03">
+  <span class="dcpl-row-main">
+    <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Inghinal total</span></span>
+    <span class="dcpl-price">360 lei</span>
+  </span>
+  <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+</label>
+<div class="dcpl-panel">
+  <p>
+    Tratament de epilare definitivă pentru zona inghinală extinsă, cu obiectiv principal reducerea firelor de păr și îmbunătățirea confortului cutanat.
+    Poate ajuta și în caz de foliculită și fire încarnate asociate epilării clasice.<br><br>
+
+    <span class="dcpl-ep-ref">Pentru mai multe detalii despre aparat și pregătire:</span>
+    <a href="#dcpl-ep-info-row" class="dcpl-jump dcpl-ep-jump" data-dcpl-open="dcpl-ep-info">Important de citit înainte de programare</a>.
+  </p>
+  <label class="dcpl-close" for="dcpl-none">Închide</label>
+</div>
+
+<!-- UMERI -->
+<input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-ep-04">
+<label class="dcpl-row" for="dcpl-ep-04">
+  <span class="dcpl-row-main">
+    <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Umeri</span></span>
+    <span class="dcpl-price">360 lei</span>
+  </span>
+  <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+</label>
+<div class="dcpl-panel">
+  <p>
+    Tratament de epilare definitivă pentru umeri, cu obiectiv principal reducerea firelor de păr și uniformizarea aspectului pielii.<br><br>
+
+    <span class="dcpl-ep-ref">Pentru mai multe detalii despre aparat și pregătire:</span>
+    <a href="#dcpl-ep-info-row" class="dcpl-jump dcpl-ep-jump" data-dcpl-open="dcpl-ep-info">Important de citit înainte de programare</a>.
+  </p>
+  <label class="dcpl-close" for="dcpl-none">Închide</label>
+</div>
+
+<!-- ABDOMEN -->
+<input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-ep-05">
+<label class="dcpl-row" for="dcpl-ep-05">
+  <span class="dcpl-row-main">
+    <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Abdomen</span></span>
+    <span class="dcpl-price">360 lei</span>
+  </span>
+  <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+</label>
+<div class="dcpl-panel">
+  <p>
+    Tratament de epilare definitivă pentru abdomen, cu obiectiv principal reducerea firelor de păr.
+    Setările se personalizează și pentru fire subțiri, în funcție de evaluare și de contextul hormonal al zonei.<br><br>
+
+    <span class="dcpl-ep-ref">Pentru mai multe detalii despre aparat și pregătire:</span>
+    <a href="#dcpl-ep-info-row" class="dcpl-jump dcpl-ep-jump" data-dcpl-open="dcpl-ep-info">Important de citit înainte de programare</a>.
+  </p>
+  <label class="dcpl-close" for="dcpl-none">Închide</label>
+</div>
+
+<!-- ZONĂ LOMBARĂ -->
+<input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-ep-06">
+<label class="dcpl-row" for="dcpl-ep-06">
+  <span class="dcpl-row-main">
+    <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Zonă lombară</span></span>
+    <span class="dcpl-price">360 lei</span>
+  </span>
+  <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+</label>
+<div class="dcpl-panel">
+  <p>
+    Tratament de epilare definitivă pentru zona lombară, cu obiectiv principal reducerea firelor de păr.
+    Poate fi util și pentru foliculită sau fire încarnate apărute după epilare clasică.<br><br>
+
+    <span class="dcpl-ep-ref">Pentru mai multe detalii despre aparat și pregătire:</span>
+    <a href="#dcpl-ep-info-row" class="dcpl-jump dcpl-ep-jump" data-dcpl-open="dcpl-ep-info">Important de citit înainte de programare</a>.
+  </p>
+  <label class="dcpl-close" for="dcpl-none">Închide</label>
+</div>
+
+<!-- BRAȚ PARȚIAL -->
+<input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-ep-07">
+<label class="dcpl-row" for="dcpl-ep-07">
+  <span class="dcpl-row-main">
+    <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Braț parțial (antebraț sau braț superior)</span></span>
+    <span class="dcpl-price">360 lei</span>
+  </span>
+  <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+</label>
+<div class="dcpl-panel">
+  <p>
+    Tratament de epilare definitivă pentru de braț partial (antebraț sau braț superior), cu obiectiv principal reducerea firelor de păr și o piele mai netedă.<br><br>
+
+    <span class="dcpl-ep-ref">Pentru mai multe detalii despre aparat și pregătire:</span>
+    <a href="#dcpl-ep-info-row" class="dcpl-jump dcpl-ep-jump" data-dcpl-open="dcpl-ep-info">Important de citit înainte de programare</a>.
+  </p>
+  <label class="dcpl-close" for="dcpl-none">Închide</label>
+</div>
+
+<!-- FESE -->
+<input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-ep-08">
+<label class="dcpl-row" for="dcpl-ep-08">
+  <span class="dcpl-row-main">
+    <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Fese</span></span>
+    <span class="dcpl-price">345 lei</span>
+  </span>
+  <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+</label>
+<div class="dcpl-panel">
+  <p>
+    Tratament de epilare definitivă pentru zona feselor, cu obiectiv principal reducerea firelor de păr.
+    Recomandat și în caz de foliculită sau fire încarnate asociate epilării clasice sau rasului.<br><br>
+
+    <span class="dcpl-ep-ref">Pentru mai multe detalii despre aparat și pregătire:</span>
+    <a href="#dcpl-ep-info-row" class="dcpl-jump dcpl-ep-jump" data-dcpl-open="dcpl-ep-info">Important de citit înainte de programare</a>.
+  </p>
+  <label class="dcpl-close" for="dcpl-none">Închide</label>
+</div>
+
+<!-- BRAȚ INTEGRAL -->
+<input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-ep-09">
+<label class="dcpl-row" for="dcpl-ep-09">
+  <span class="dcpl-row-main">
+    <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Braț total</span></span>
+    <span class="dcpl-price">555 lei</span>
+  </span>
+  <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+</label>
+<div class="dcpl-panel">
+  <p>
+    Tratament de epilare definitivă pentru braț superior și antebraț, cu obiectiv principal reducerea firelor de păr și confort mai bun față de epilarea clasică.<br><br>
+
+    <span class="dcpl-ep-ref">Pentru mai multe detalii despre aparat și pregătire:</span>
+    <a href="#dcpl-ep-info-row" class="dcpl-jump dcpl-ep-jump" data-dcpl-open="dcpl-ep-info">Important de citit înainte de programare</a>.
+  </p>
+  <label class="dcpl-close" for="dcpl-none">Închide</label>
+</div>
+
+<!-- PICIOARE SCURT/PARȚIAL -->
+<input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-ep-10">
+<label class="dcpl-row" for="dcpl-ep-10">
+  <span class="dcpl-row-main">
+    <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Picioare parțial (gambe sau coapse)</span></span>
+    <span class="dcpl-price">555 lei</span>
+  </span>
+  <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+</label>
+<div class="dcpl-panel">
+  <p>
+  Epilare definitivă parțială picior (gambe sau coapse)
+Tratament cu obiectiv de reducere progresivă a firului de par (pilozității) și îmbunătățirea aspectului pielii, pentru o senzație de netezime de durată.<br><br>
+
+    <span class="dcpl-ep-ref">Pentru mai multe detalii despre aparat și pregătire:</span>
+    <a href="#dcpl-ep-info-row" class="dcpl-jump dcpl-ep-jump" data-dcpl-open="dcpl-ep-info">Important de citit înainte de programare</a>.
+  </p>
+  <label class="dcpl-close" for="dcpl-none">Închide</label>
+</div>
+
+<!-- PICIOARE LUNG/INTEGRAL-->
+<input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-ep-11">
+<label class="dcpl-row" for="dcpl-ep-11">
+  <span class="dcpl-row-main">
+    <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Picioare total</span></span>
+    <span class="dcpl-price">825 lei</span>
+  </span>
+  <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+</label>
+<div class="dcpl-panel">
+  <p>
+    Tratament de epilare definitivă pentru picioare, cu obiectiv principal reducerea firelor de păr.
+    Poate ajuta și în caz de foliculită și fire încarnate asociate epilării clasice sau rasului.<br><br>
+
+    <span class="dcpl-ep-ref">Pentru mai multe detalii despre aparat și pregătire:</span>
+    <a href="#dcpl-ep-info-row" class="dcpl-jump dcpl-ep-jump" data-dcpl-open="dcpl-ep-info">Important de citit înainte de programare</a>.
+  </p>
+  <label class="dcpl-close" for="dcpl-none">Închide</label>
+</div>
+
+<!-- SPATE INTEGRAL -->
+<input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-ep-12">
+<label class="dcpl-row" for="dcpl-ep-12">
+  <span class="dcpl-row-main">
+    <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Spate (integral)</span></span>
+    <span class="dcpl-price">890 lei</span>
+  </span>
+  <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+</label>
+<div class="dcpl-panel">
+  <p>
+    Tratament de epilare definitivă pentru spate, cu obiectiv principal reducerea firelor de păr.
+    Parametrii se personalizează în funcție de densitate, fototip și sensibilitatea zonei.<br><br>
+
+    <span class="dcpl-ep-ref">Pentru mai multe detalii despre aparat și pregătire:</span>
+    <a href="#dcpl-ep-info-row" class="dcpl-jump dcpl-ep-jump" data-dcpl-open="dcpl-ep-info">Important de citit înainte de programare</a>.
+  </p>
+  <label class="dcpl-close" for="dcpl-none">Închide</label>
+</div>
+
+<!-- PACHETE -->
+<input class="dcpl-toggle" type="radio" name="dcpl-acc" id="dcpl-ep-pack">
+<label class="dcpl-row" for="dcpl-ep-pack">
+  <span class="dcpl-row-main">
+    <span class="dcpl-left"><span class="dcpl-arrow">▸</span><span class="dcpl-name">Pachete de epilare (6 ședințe)</span></span>
+    <span class="dcpl-price">10% reducere</span>
+  </span>
+  <span class="dcpl-more"><span class="dcpl-more-arrow">▾</span>detalii<span class="dcpl-more-arrow">▾</span></span>
+</label>
+<div class="dcpl-panel dcpl-long">
+  <p>
+
+<strong>Pachete flexibile, create de tine</strong><br><br>
+
+Nu oferim pachete prestabilite pentru epilare definitivă, deoarece fiecare client are zone și obiective diferite. În schimb, îți poți construi propriul pachet, alegând exact zonele și ședințele de care ai nevoie.<br><br>
+
+<strong>Avantaje pentru tine</strong><br>
+• Plătești fiecare ședință individual, fără să achiți în avans un pachet de 6 ședințe.<br>
+• Practic îți împarți bugetul în rate, pe măsură ce vii la ședințe.<br>
+• Poți ajusta zonele pe parcurs, în funcție de rezultate și obiective.<br>
+• Poți opri oricând dacă ești mulțumită, dacă nu mai ai nevoie sau dacă vrei să reevaluezi, fără să rămâi cu ședințe achitate în plus.<br><br>
+
+Pentru fidelitate, la fiecare 6 ședințe beneficiezi de <strong>10% reducere</strong>, aplicată la ședința a 6-a, conform regulilor de mai jos.<br><br>
+
+<strong>La a 6-a ședință primești reducere de 10% din totalul celor 6 ședințe.</strong><br><br>
+
+<strong>Cum se aplică (pe scurt)</strong><br>
+• Alegi oricare 6 ședințe, pe zonele pe care le dorești.<br>
+• Primele 5 ședințe se achită la preț întreg.<br>
+• La ședința a 6-a se aplică o reducere egală cu 10% din suma totală a celor 6 ședințe.<br><br>
+
+<strong>Exemplu concret cu prețurile din listă</strong><br>
+Picioare parțial 555 lei x 2 = 1.110 lei<br>
+Braț total 555 lei x 2 = 1.110 lei<br>
+Zone mici 360 lei x 2 = 720 lei<br>
+Total 6 ședințe = 2.940 lei<br>
+Reducerea la ședința a 6-a = 10% din 2.940 = 294 lei<br><br>
+
+Dacă ședința a 6-a este Zone mici (360 lei), plătești: 360 - 294 = 66 lei.<br>
+Dacă ședința a 6-a este Picioare parțial sau Braț total (555 lei), plătești: 555 - 294 = 261 lei.<br><br>
+
+<strong>Recomandare pentru rezultate</strong><br>
+Pentru rezultate optime pe o zonă, de regulă sunt necesare 4-6 ședințe (uneori până la 8), la intervale regulate.
+Dacă cele 6 ședințe sunt pe zone diferite, rezultatele pe fiecare zonă vor avansa, dar eficiența maximă pentru fiecare zonă se obține după ce acea zonă primește numărul complet de ședințe recomandat.<br>
+Dacă ești la început, recomandăm să începi cu zone mici, ca să calibrăm confortul și parametrii cât mai precis.<br><br>
+
+<strong>Important</strong><br>
+Reducerea se aplică doar până la valoarea ședinței a 6-a. Dacă reducerea calculată este mai mare decât prețul ședinței a 6-a,
+reducerea se limitează la prețul acelei ședințe și nu se rambursează diferența.
+</p>
+
+    <span class="dcpl-ep-ref">Pentru mai multe detalii despre aparat și pregătire:</span>
+    <a href="#dcpl-ep-info-row" class="dcpl-jump dcpl-ep-jump" data-dcpl-open="dcpl-ep-info">Important de citit înainte de programare</a>.
+  <p></p>
+  <label class="dcpl-close" for="dcpl-none">Închide</label>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var wrap = document.getElementById('dcpl');
+  if (!wrap) return;
+
+  var labels = wrap.querySelectorAll('.dcpl-row');
+  var noneInput = document.getElementById('dcpl-none');
+
+  labels.forEach(function (label) {
+    label.addEventListener('click', function (e) {
+      e.preventDefault();
+
+      var inputId = label.getAttribute('for');
+      var input = document.getElementById(inputId);
+      if (!input || !noneInput) return;
+
+      if (input.checked) {
+        noneInput.checked = true;
+      } else {
+        input.checked = true;
+      }
+    });
+  });
+
+  /* Click pe linkurile care duc la "Important": deschide + scroll */
+  wrap.addEventListener('click', function (e) {
+    var a = e.target.closest('a.dcpl-jump');
+    if (!a) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    var targetId = a.getAttribute('data-dcpl-open');  // dcpl-ep-info
+    var input = document.getElementById(targetId);
+    if (input) input.checked = true;
+
+    var targetEl = document.querySelector(a.getAttribute('href')); // #dcpl-ep-info-row
+    setTimeout(function () {
+      if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+  }, true);
+});
+</script>
+
+</div>
